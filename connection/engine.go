@@ -98,7 +98,7 @@ func (e *Engine) Start(myKey wgtypes.Key, peers []Peer) error {
 			addPeer(e, wgPort, myKey, peer)
 		})
 
-		err := http.ListenAndServe(":7777", nil)
+		err := http.ListenAndServe("127.0.0.1:7777", nil)
 		if err != nil {
 			log.Fatal(err)
 		}
