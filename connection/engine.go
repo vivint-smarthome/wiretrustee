@@ -1,7 +1,12 @@
 package connection
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"time"
+
 	"github.com/cenkalti/backoff/v4"
 	ice "github.com/pion/ice/v2"
 	log "github.com/sirupsen/logrus"
@@ -10,7 +15,6 @@ import (
 	sProto "github.com/wiretrustee/wiretrustee/signal/proto"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"sync"
-	"time"
 )
 
 // PeerConnectionTimeout is a timeout of an initial connection attempt to a remote peer.
@@ -83,6 +87,27 @@ func (e *Engine) Start(myKey wgtypes.Key, peers []Peer) error {
 		peer := peer
 		go e.InitializePeer(*wgPort, myKey, peer)
 	}
+
+	go func() {
+		http.HandleFunc("/peer", func(w http.ResponseWriter, r *http.Request) {
+			body, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				log.Error("%s", err)
+				return
+			}
+			var peer Peer
+			err = json.Unmarshal(body, &peer)
+			if err != nil {
+				log.Error("%s", err)
+				return
+			}
+			go e.InitializePeer(*wgPort, myKey, peer)
+		})
+		err := http.ListenAndServe("127.0.0.1:7777", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 	return nil
 }
 
