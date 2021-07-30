@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "/proto";
+
+package management;
+
+service ManagementService {
+
+  rpc RegisterPeer(RegisterPeerRequest) returns (RegisterPeerResponse) {}
+
+  // Sync enables peer synchronization. Each peer that is connected to this stream will receive updates from the server.
+  // For example, if a new peer has been added to an account all other connected peers will receive this peer's Wireguard public key as an update
+  // The initial SyncResponse contains all of the available peers so the local state can be refreshed
+  rpc Sync(EncryptedMessage) returns (stream EncryptedMessage) {}
+
+  // Exposes a Wireguard public key of the Management service.
+  // This key is used to support message encryption between client and server
+  rpc GetServerKey(Empty) returns (ServerKeyResponse) {}
+
+  // health check endpoint
+  rpc isHealthy(Empty) returns (Empty) {}
+}
+
+message EncryptedMessage {
+  // Wireguard public key
+  string wgPubKey = 1;
+
+  // encrypted message Body
+  bytes body = 2;
+}
+
+message SyncRequest {}
+
+// SyncResponse represents a state that should be applied to the local peer (e.g. Wiretrustee servers config as well as local peer and remote peers configs)
+message SyncResponse {
+  // Global config
+  WiretrusteeConfig wiretrusteeConfig = 1;
+
+  PeerConfig peerConfig = 2;
+
+  repeated RemotePeerConfig remotePeers = 3;
+}
+
+message RegisterPeerRequest {
+  // Wireguard public key
+  string key = 1;
+
+  // Pre-authorized setup key
+  string setupKey = 2;
+}
+
+message RegisterPeerResponse {}
+
+message ServerKeyResponse {
+  // Server's Wireguard public key
+  string key = 1;
+  // Key expiration timestamp after which the key should be fetched again by the client
+  google.protobuf.Timestamp expiresAt = 2;
+}
+
+message Empty {}
+
+// WiretrusteeConfig is a common configuration of any Wiretrustee peer. It contains STUN, TURN, Signal and Management servers configurations
+message WiretrusteeConfig {
+  // a list of STUN servers
+  repeated HostConfig stuns = 1;
+  // a list of TURN servers
+  repeated ProtectedHostConfig turns = 2;
+
+  // a Signal server config
+  HostConfig signal = 3;
+}
+
+// HostConfig describes connection properties of some server (e.g. STUN, Signal, Management)
+message HostConfig {
+  // URI of the resource e.g. turns://stun.wiretrustee.com:4430 or signal.wiretrustee.com:10000
+  string uri = 1;
+  Protocol protocol = 2;
+
+  enum Protocol {
+    UDP = 0;
+    TCP = 1;
+    HTTP = 2;
+    HTTPS = 3;
+    DTLS = 4;
+  }
+}
+// ProtectedHostConfig is similar to HostConfig but has additional user and password
+// Mostly used for TURN servers
+message ProtectedHostConfig {
+  HostConfig hostConfig = 1;
+  string user = 2;
+  string password = 3;
+}
+
+// PeerConfig represents a configuration of a "our" peer.
+// The properties are used to configure local Wireguard
+message PeerConfig {
+  // Peer's virtual IP address within the Wiretrustee VPN (a Wireguard address config)
+  string  address = 1;
+  // Wiretrustee DNS server (a Wireguard DNS config)
+  string dns = 2;
+}
+
+// RemotePeerConfig represents a configuration of a remote peer.
+// The properties are used to configure Wireguard Peers sections
+message RemotePeerConfig {
+
+  // A Wireguard public key of a remote peer
+  string wgPubKey = 1;
+
+  // Wireguard allowed IPs of a remote peer e.g. [10.30.30.1/32]
+  repeated string allowedIps = 2;
+}

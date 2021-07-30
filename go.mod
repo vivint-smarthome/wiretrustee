@@ -11,6 +11,7 @@ require (
 	github.com/pion/ice/v2 v2.1.7
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.3
+	github.com/spf13/viper v1.7.0
 	github.com/vishvananda/netlink v1.1.0
 	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf
 	golang.org/x/sys v0.0.0-20210510120138-977fb7262007
@@ -18,4 +19,5 @@ require (
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210506160403-92e472f520a5
 	golang.zx2c4.com/wireguard/windows v0.3.14
 	google.golang.org/grpc v1.32.0
+	google.golang.org/protobuf v1.26.0
 )
