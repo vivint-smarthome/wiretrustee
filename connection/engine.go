@@ -89,7 +89,6 @@ func (e *Engine) Start(myKey wgtypes.Key, peers []Peer) error {
 	}
 
 	go func() {
-		fmt.Println("starting up http server")
 		http.HandleFunc("/peer", func(w http.ResponseWriter, r *http.Request) {
 			body, err := ioutil.ReadAll(r.Body)
 			if err != nil {
